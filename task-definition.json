@@ -1,0 +1,37 @@
+{
+    "family": "rg-converter",
+    "taskRoleArn": "",
+    "executionRoleArn": "",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+        {
+            "name": "app",
+            "image": "",
+            "essential": true,
+            "environment": [],
+            "disableNetworking": true,
+            "privileged": true,
+            "readonlyRootFilesystem": true,
+            "interactive": true,
+            "pseudoTerminal": true
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1vCPU",
+    "memory": "4GB",
+    "tags": [
+        {
+            "key": "client",
+            "value": ""
+        }
+    ],
+    "ephemeralStorage": {
+        "sizeInGiB": 20
+    },
+    "runtimePlatform": {
+        "cpuArchitecture": "ARM64",
+        "operatingSystemFamily": "LINUX"
+    }
+}
