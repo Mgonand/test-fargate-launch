@@ -1,7 +1,7 @@
 {
   "family": "rg-converter",
   "taskRoleArn": "",
-  "executionRoleArn": "",
+  "executionRoleArn": "ecsTaskExecutionRole",
   "networkMode": "awsvpc",
   "containerDefinitions": [
     {
@@ -26,7 +26,7 @@
     }
   ],
   "ephemeralStorage": {
-    "sizeInGiB": 20
+    "sizeInGiB": 30
   },
   "runtimePlatform": {
     "cpuArchitecture": "ARM64",
