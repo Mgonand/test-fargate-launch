@@ -1,6 +1,43 @@
 import AWS from 'aws-sdk';
+import {EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand} from '@aws-sdk/client-ec2';
 
-async function getSubnetsForClient(
+export async function getSubnetsForClient(
+  credentials: AWS.Credentials,
+  client: string,
+) {
+  const ec2 = new EC2Client({
+    region: 'eu-west-1',
+    credentials: credentials,
+    
+  });
+  const vpcsCommand = new DescribeVpcsCommand({
+      Filters: [
+        {
+          Name: 'tag:client',
+          Values: [client],
+        },
+      ],
+    });
+  const vpcs = await ec2.send(vpcsCommand);
+  if (!vpcs.Vpcs || vpcs.Vpcs.length === 0) {
+    throw new Error('No VPCs returned');
+  }
+  const subnetsCommand = new DescribeSubnetsCommand({
+      Filters: [
+        {
+          Name: 'vpc-id',
+          Values: [vpcs.Vpcs[0].VpcId || ''],
+        },
+      ],
+    });
+  const subnets = await ec2.send(subnetsCommand);
+  if (!subnets.Subnets || subnets.Subnets.length === 0) {
+    throw new Error('No subnets returned');
+  }
+  return subnets.Subnets;
+}
+
+export async function getSubnetsForClientOld(
   credentials: AWS.Credentials,
   client: string,
 ) {
@@ -8,29 +45,19 @@ async function getSubnetsForClient(
     region: 'eu-west-1',
     credentials: credentials,
   });
-  const vpcs = await ec2
-    .describeVpcs({
-      Filters: [
-        {
-          Name: 'tag:client',
-          Values: [client],
-        },
-      ],
-    })
-    .promise();
-  if (!vpcs.Vpcs || vpcs.Vpcs.length === 0) {
-    throw new Error('No VPCs returned');
-  }
   const subnets = await ec2
     .describeSubnets({
       Filters: [
         {
-          Name: 'vpc-id',
-          Values: [vpcs.Vpcs[0].VpcId || ''],
+          Name: 'tag:Name',
+          Values: ['*public*'],
         },
+        {
+          Name: 'tag:client',
+          Values: ['anaya'],
+        }
       ],
-    })
-    .promise(); // TODO: revisar error extraño: Error: XMLParserError: Non-whitespace before first tag.
+    }).promise();
   if (!subnets.Subnets || subnets.Subnets.length === 0) {
     throw new Error('No subnets returned');
   }
@@ -52,7 +79,7 @@ export async function setupNewTask(
     region: 'eu-west-1',
     credentials: credentials,
   });
-  // const subnets = await getSubnetsForClient(credentials, 'anaya');
+  const subnets = await getSubnetsForClientOld(credentials, 'anaya');
   const data = await ecs
     .runTask({
       cluster,
@@ -61,7 +88,7 @@ export async function setupNewTask(
       launchType,
       networkConfiguration: {
         awsvpcConfiguration: {
-          subnets: process.env.VPC_SUBNETS?.split(',') || [],
+          subnets: subnets.map((subnet) => subnet.SubnetId || ''),
           assignPublicIp: 'ENABLED',
         },
       },

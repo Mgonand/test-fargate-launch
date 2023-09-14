@@ -1,4 +1,5 @@
 import AWS from 'aws-sdk';
+import { EC2ServiceException } from '@aws-sdk/client-ec2';
 import { getCredentialsForRole } from './getCredentialsForRole';
 import { ACCOUNT_ID, ROLE_ARN, ROLE_SESSION_NAME } from './constants';
 import { setupNewTask } from './setupNewTask';
@@ -17,13 +18,16 @@ try {
   if (!credentials) {
     throw new Error('No credentials returned');
   }
+  console.log(credentials.AccessKeyId,credentials.SecretAccessKey, credentials.SessionToken);
+  const awsCredentials = new AWS.Credentials(
+    credentials.AccessKeyId,
+    credentials.SecretAccessKey,
+    credentials.SessionToken,
+  );
   await setupNewTask(
-    new AWS.Credentials(
-      credentials.AccessKeyId,
-      credentials.SecretAccessKey,
-      credentials.SessionToken,
-    ),
-    'rg-obfuscation-service',
+    awsCredentials,
+    // 'rg-obfuscation-service',
+    'rg-converter',
     TASK_ENV_VARS,
     'FARGATE',
     'anaya-test',
@@ -32,5 +36,10 @@ try {
     `arn:aws:iam::${ACCOUNT_ID}:role/${process.env.TASK_ROLE_NAME || ''}`,
   );
 } catch (e) {
-  console.error(e);
+  if ((e as EC2ServiceException).$response) {
+    const ec2Exception = e as EC2ServiceException;
+    console.error(`StatusCode: ${ec2Exception.$response?.statusCode}`);
+  } else {
+    console.error(e);
+  }
 }

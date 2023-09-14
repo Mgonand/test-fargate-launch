@@ -3,15 +3,19 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun run ./src/index.ts"
+    "dev": "bun run ./src/index.ts",
+    "dev:node": "NODE_ENV=development ts-node-dev ./src/index.ts -p tsconfig.node.json"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "dotenv": "^16.3.1",
+    "ts-node-dev": "^2.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@aws-sdk/client-ec2": "^3.411.0",
     "aws-sdk": "^2.1455.0"
   }
 }
